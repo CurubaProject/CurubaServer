@@ -21,7 +21,7 @@ var dbRequest = (function () {
 	return {
 		Query : function (query, callback) {
 			db.init();
-			db.update(query, callback);
+			db.request(query, callback);
 			db.close();
 		},
 		init : function () {

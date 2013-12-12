@@ -24,7 +24,8 @@ var Device = {
 	},
 	DEVICESTATE : {
 		ON : 1,
-		OFF : 0
+		OFF : 2,
+		NOLOAD : 3
 	},
 	TYPESTATISTIC : {
 		DAY : 3,
@@ -44,7 +45,8 @@ var App = {
 	},
 	DEVICESTATE : {
 		ON : 'on',
-		OFF : 'off'
+		OFF : 'off',
+		NOLOAD : 'noload'
 	},
 	TYPESTATISTIC : {
 		DAY : 'by day',

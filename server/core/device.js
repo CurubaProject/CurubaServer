@@ -27,25 +27,46 @@ var getListDeviceConnected = function () {
 };
 
 var DeviceRegistrer = {
-	sqlRequest : SQLRequest.REGISTRERDEVICE,
-	callback : function (data) {
-	    // Nothing to be done here.
+	sqlRequestRegister : SQLRequest.REGISTRERDEVICE,
+	sqlRequestAddCustomInfo : SQLRequest.AddCUSTOMINFO,
+	sqlRequestSelectDeviceId : SQLRequest.SELECTDEVICEID,
+	callback : function (data, newDevice) {
+
+		var that = this;
+
+	    DbRequest.Query(that.getQuerySelectDeviceId(newDevice), function (data) {
+			that.callbackCustomInfo(data[0].idDevice);
+        });
+	},
+	callbackCustomInfo : function (data) {
+		var that = this;
+		// TODO UPDATE??
+		DbRequest.Query(that.getQueryCustomInfo(data), function (data) {
+        });
 	},
 	getQuery : function (newDevice) {
-		return Util.format(this.sqlRequest,
-								newDevice.deviceId,
-								newDevice.deviceType,
-								newDevice.deviceState,
-								newDevice.deviceIP,
+		return util.format(this.sqlRequestRegister, 
+								newDevice.deviceId, 
+								newDevice.deviceType, 
+								newDevice.deviceState, 
+								newDevice.deviceIP, 
 								newDevice.deviceNumber);
+	},
+	getQuerySelectDeviceId : function (newDevice) {
+		return util.format(this.sqlRequestSelectDeviceId, newDevice.deviceId,
+							          newDevice.deviceNumber);
+	},
+	getQueryCustomInfo : function (deviceId) {
+		return util.format(this.sqlRequestAddCustomInfo, deviceId);
 	},
 	saveDevice : function (newDevice) {
 		var that = this;
 
-      DbRequest.Query(that.getQuery(newDevice), function (data) {
+	  DbRequest.Query(that.getQuery(newDevice), function (data) {
          that.callback(data);
       });
 	}
+
 };
 
 var subscribe = (function () {

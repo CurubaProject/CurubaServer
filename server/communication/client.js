@@ -35,17 +35,17 @@ var listDeviceRequest = {
 	  res.send( jsonPCallback + '(' + this.format(data) + ')' );
 	},
     format : function (data) {
-    	var listDevice = '[';
-    	for (var index = data.length; index-- ;) {
-     		listDevice += '{ DeviceId:\'' + data[index].ID +
-    						'\', DeviceName:\'' + data[index].Name +
-    						'\', DeviceType:\'' + Converter.getAppConstant('DEVICETYPE', data[index].Type) +
-    						'\', DeviceStatus:\'' + Converter.getAppConstant('DEVICESTATE', data[index].State) + '\' },';
-    	}
-    	listDevice = listDevice.substring(0,listDevice.length);
-    	listDevice += ']';
+		var listDevice = '[';
+		for (var index = data.length; index-- ;) {
+     		listDevice += '{ DeviceId:{ DeviceId:' + data[index].ID + ', DeviceNumber: ' + data[index].DeviceNumber + '}' +
+							', DeviceName:\'' + data[index].Name + 
+							'\', DeviceType:\'' + converter.getAppConstant('DEVICETYPE', data[index].Type) + 
+							'\', DeviceStatus:\'' + converter.getAppConstant('DEVICESTATE', data[index].State) + '\' },';
+		}
+		listDevice = listDevice.substring(0,listDevice.length);
+		listDevice += ']';
 
-    	return listDevice;
+		return listDevice;
     },
 	execute : function (params, res) {
 		var that = this;
@@ -83,10 +83,10 @@ var deviceDetails = {
 		}
    },
 	format : function (data) {
-		var listDevice = '[{ DeviceId:\'' + data[0].ID +
-							 '\', DeviceName:\'' + data[0].Name +
-							 '\', DeviceType:\'' + Converter.getAppConstant('DEVICETYPE', data[0].Type) +
-							 '\', DeviceStatus:\'' + Converter.getAppConstant('DEVICESTATE', data[0].State) + '\' }]';
+		var listDevice = '[{ DeviceId:{ DeviceId:' + data[0].ID + ', DeviceNumber:' + data[0].DeviceNumber + '}' +
+					', DeviceName:\'' + data[0].Name + 
+					'\', DeviceType:\'' + converter.getAppConstant('DEVICETYPE', data[0].Type) + 
+					'\', DeviceStatus:\'' + converter.getAppConstant('DEVICESTATE', data[0].State) + '\' }]';
 
 		return listDevice;
 	},

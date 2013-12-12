@@ -18,23 +18,30 @@
 var binaryParser = require('../communication/binaryParser'),
 	 converter = require('../communication/converter');
 	 constant = require('../communication/constant'); // TODO belm2440 : Check if this is needed.
-
-var getMessage = function (payLoadID, params) {
+	 SQLRequest = require('../db/request').Request,
+	 Util = require('util');
+var getMessage = function (payLoadID, params, callback) {
 	var status = 1;//converter.getModuleConstant('DEVICESTATUS',
 						//								  1);
 	var state = converter.getModuleConstant('DEVICESTATE', params.Parameters.DeviceState);
+	console.log('state:'  + state);
+	console.log('stateP:'  + params.Parameters.DeviceState);
 
-	var message = {
-		payload : binaryParser.getBuffer(payLoadID, {
-			'deviceNumber' : 1,
-			'status' : status,
-			'state' : state,
-			'analogRead' : params.Parameters.DeviceValue
-		}),
-		DeviceId : params.DeviceId
-	};
+	var deviceGUID = undefined;
+	DbRequest.Query(Util.format(SQLRequest.SELECTDEVICEGUID, params.DeviceId), function (data) {
+		var message = {
+			payload : bp.getBuffer(payLoadID, {
+				'deviceNumber' : params.DeviceNumber,
+				'status' : status,
+				'state' : state,
+				'analogRead' : params.Parameters.DeviceValue
+			}),
+			device : { deviceId : data[0].DeviceGUID , deviceNumber : params.DeviceNumber }
+		};
 
-	return message;
+		callback(message);
+	});
+		
 };
 
 exports.getMessage = getMessage;

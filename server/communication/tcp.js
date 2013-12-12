@@ -34,17 +34,37 @@ var createTCPServer = function (port) {
         device.setTimeout(IDLETIMEOUT, function () {
 			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
-            device.end();
+
+			if (devices.indexOf(device) === -1) {			
+				device.end();
+				console.log(device.name + ': end');
+			} else {
+				this();
+			}
         });
 
         device.on('end', function () {
 			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
+
+			if (devices.indexOf(device) === -1) {			
+				device.end();
+				console.log(device.name + ': end');
+			} else {
+				this();
+			}
         });
 
         device.on('close', function () {
 			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
+
+			if (devices.indexOf(device) === -1) {			
+				device.end();
+				console.log(device.name + ': end');
+			} else {
+				this();
+			}
         });
 
         device.on('error', function (err) {
@@ -53,26 +73,37 @@ var createTCPServer = function (port) {
 
         device.on('data', function (data) {
             var decodedData = binaryParser.parser(data);
-            device.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
 
-            if ( decodedData.payload === PayloadType.INFORESPONSE && !deviceExist(devices, device.deviceId, decodedData.deviceNumber) ) {
-                this.infoDevice = { deviceId : device.deviceId, deviceNumber : decodedData.deviceNumber };
-                devices.push(this);
 
-                Publisher.publish({
-                    deviceId : device.deviceId,
-                    deviceNumber : decodedData.deviceNumber,
-                    deviceState :  decodedData.state,
-                    deviceType : decodedData.type,
-                    deviceIP : device.remoteAddress
-                }, 'clients');
-                Publisher.publish({ type : EVENTTYPE.LOG, message : 'Registrer : ' + device.deviceId }, 'events');
-            }
+			if ( decodedData.payload === PayloadType.INFORESPONSE ) {
+				this.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
+				this.infoDevice.push({ deviceId : device.deviceId, deviceNumber : decodedData.deviceNumber });
+				devices.push(this);
+
+				Publisher.publish({
+					deviceId : device.deviceId,
+					deviceNumber : decodedData.deviceNumber,
+					deviceState :  decodedData.state,
+					deviceType : decodedData.type,
+					deviceIP : device.remoteAddress
+				}, 'clients');
+				Publisher.publish({ type : EVENTTYPE.LOG, message : 'Registrer : ' + device.deviceId }, 'events');
+			} else if ( decodedData.payload === PayloadType.HEARTBEAT ) {
+				Publisher.publish({
+					deviceId : device.deviceId,
+					deviceNumber : decodedData.deviceNumber,
+					deviceState :  decodedData.state,
+					deviceType : decodedData.type,
+					deviceIP : device.remoteAddress
+				}, 'clients');
+				
+				Publisher.publish({ type : EVENTTYPE.LOG, message : 'Update Device : ' + device.deviceId }, 'events');
+			}
         });
-
         var message = 'Connected : ' + device.name;
         Publisher.publish({type : EVENTTYPE.LOG, message : message}, 'events');
-
+		
+		device.infoDevice = [];
         device.write(binaryParser.getBuffer(PayloadType.INFOREQUEST, undefined));
     }).listen(port);
 };
@@ -104,17 +135,23 @@ var subscribe = (function () {
 })();
 
 var sendMessage = function (message, DeviceId) {
-    var success = false;
-	var numberDevices = devices.length;
-	
-	for ( var indexDevice = numberDevices; indexDevice--;) {
-		if (device.DeviceId === DeviceId) {
-            device.write(message);
-            success = true;
-        }
+	var success = false;
+
+	firstLoop  : for (var index0 = devices.length; index0--; ) {
+		var device = devices[index0];
+		for (var index = device.infoDevice.length; index--;) {
+			if (device.infoDevice[index].deviceId === currentDevice.deviceId && 
+				device.infoDevice[index].deviceNumber == currentDevice.deviceNumber) {
+				device.write(message);
+				success = true;
+				console.log('Message sent!');
+				break firstLoop;
+			}
+		}
+
 	}
 
-    return success;
+    return { 'success' : success };
 };
 
 exports.broadcast = broadcast;
