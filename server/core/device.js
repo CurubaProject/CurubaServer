@@ -30,8 +30,7 @@ var DeviceRegistrer = {
 	sqlRequestRegister : SQLRequest.REGISTRERDEVICE,
 	sqlRequestAddCustomInfo : SQLRequest.AddCUSTOMINFO,
 	sqlRequestSelectDeviceId : SQLRequest.SELECTDEVICEID,
-	callback : function (data, newDevice) {
-
+	callback : function (newDevice) {
 		var that = this;
 
 	    DbRequest.Query(that.getQuerySelectDeviceId(newDevice), function (data) {
@@ -45,7 +44,9 @@ var DeviceRegistrer = {
         });
 	},
 	getQuery : function (newDevice) {
-		return util.format(this.sqlRequestRegister, 
+		var that = this;
+		
+		return Util.format(that.sqlRequestRegister, 
 								newDevice.deviceId, 
 								newDevice.deviceType, 
 								newDevice.deviceState, 
@@ -53,18 +54,21 @@ var DeviceRegistrer = {
 								newDevice.deviceNumber);
 	},
 	getQuerySelectDeviceId : function (newDevice) {
-		return util.format(this.sqlRequestSelectDeviceId, newDevice.deviceId,
-							          newDevice.deviceNumber);
+		var that = this;
+	
+		return Util.format(that.sqlRequestSelectDeviceId, newDevice.deviceId, newDevice.deviceNumber);
 	},
 	getQueryCustomInfo : function (deviceId) {
-		return util.format(this.sqlRequestAddCustomInfo, deviceId);
+		var that = this;
+		
+		return Util.format(that.sqlRequestAddCustomInfo, deviceId);
 	},
 	saveDevice : function (newDevice) {
 		var that = this;
 
-	  DbRequest.Query(that.getQuery(newDevice), function (data) {
-         that.callback(data);
-      });
+		DbRequest.Query(that.getQuery(newDevice), function (data) {
+			that.callback(newDevice);
+		});
 	}
 
 };

@@ -29,7 +29,7 @@ var parser = function (buffer) {
     var parsedBuffer = binary.parse(buffer);
     var payload = parsedBuffer.word8('payload').vars.payload;
 
-    return (payloadFactory.createPayload(payload))(parsedBuffer);
+    return (payloadFactory.createPayload(payload))(binary.parse(buffer));
 };
 
 var getBuffer = function (payloadId, data) {
