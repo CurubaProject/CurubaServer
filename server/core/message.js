@@ -14,23 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with "Curuba Server".  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
-// TODO belm2440 : RENAME CORE
+// TODO belm : RENAME CORE
 var binaryParser = require('../communication/binaryParser'),
-	 converter = require('../communication/converter');
-	 constant = require('../communication/constant'); // TODO belm2440 : Check if this is needed.
+	 Converter = require('../communication/converter');
+	 constant = require('../communication/constant'); // TODO belm : Check if this is needed.
 	 SQLRequest = require('../db/request').Request,
-	 Util = require('util');
+	 Util = require('util'),
+	 DbRequest = require('../db/dbRequest');
+	 
 var getMessage = function (payLoadID, params, callback) {
-	var status = 1;//converter.getModuleConstant('DEVICESTATUS',
-						//								  1);
-	var state = converter.getModuleConstant('DEVICESTATE', params.Parameters.DeviceState);
+	var status = 1;//Converter.getModuleConstant('DEVICESTATUS', 1);
+	var state = Converter.getModuleConstant('DEVICESTATE', params.Parameters.DeviceState);
 	console.log('state:'  + state);
 	console.log('stateP:'  + params.Parameters.DeviceState);
 
 	var deviceGUID = undefined;
 	DbRequest.Query(Util.format(SQLRequest.SELECTDEVICEGUID, params.DeviceId), function (data) {
 		var message = {
-			payload : bp.getBuffer(payLoadID, {
+			payload : binaryParser.getBuffer(payLoadID, {
 				'deviceNumber' : params.DeviceNumber,
 				'status' : status,
 				'state' : state,

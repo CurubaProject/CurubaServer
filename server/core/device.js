@@ -20,10 +20,10 @@ var Publisher = require('../events/publisher').Publisher,
     DbRequest = require('../db/dbRequest');
 
 var db = undefined;
-var ListDeviceConnected = [];
+var listDeviceConnected = [];
 
 var getListDeviceConnected = function () {
-	return ListDeviceConnected;
+	return listDeviceConnected;
 };
 
 var DeviceRegistrer = {
@@ -83,9 +83,30 @@ var subscribe = (function () {
 			deviceIP : device.deviceIP
 		};
 
-		ListDeviceConnected.push(newDevice);
+		listDeviceConnected.push(newDevice);
 		DeviceRegistrer.saveDevice(newDevice);
 	}, 'clients');
+})();
+
+var subscribeDeconection = (function () {
+	Publisher.subscribe(function (device) {
+		var oldDevice = {
+			deviceId : device.deviceId,
+			deviceNumber : device.deviceNumber
+		};
+		
+		for (var index = listDeviceConnected.length; index--;) {
+			if (oldDevice.deviceId === listDeviceConnected.deviceId) {
+				listDeviceConnected.pop(listDeviceConnected[index]);
+			}
+		}
+	}, 'clientsDeconection');
+})();
+
+var subscribeHearbeat = (function () {
+	Publisher.subscribe(function (device) {
+		DeviceRegistrer.saveDevice(device);
+	}, 'hearbeat');
 })();
 
 exports.getListDeviceConnected = getListDeviceConnected;

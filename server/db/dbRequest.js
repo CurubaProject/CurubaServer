@@ -15,14 +15,19 @@
 // along with "Curuba Server".  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 
-var db = require('./db');
-
+var db = require('./db'),
+	Publisher = require('../events/publisher').Publisher;
+	
 var dbRequest = (function () {
 	return {
 		Query : function (query, callback) {
-			db.init();
-			db.request(query, callback);
-			db.close();
+			try {
+				db.init();
+				db.request(query, callback);
+				db.close();
+			} catch (ex) {
+				Publisher.publish({type : EVENTTYPE.ERROR, message : 'Error Query : ' + ex}, 'events');
+			}
 		},
 		init : function () {
 			// Nothing to do

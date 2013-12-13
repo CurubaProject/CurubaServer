@@ -39,8 +39,8 @@ var listDeviceRequest = {
 		for (var index = data.length; index-- ;) {
      		listDevice += '{ DeviceId:{ DeviceId:' + data[index].ID + ', DeviceNumber: ' + data[index].DeviceNumber + '}' +
 							', DeviceName:\'' + data[index].Name + 
-							'\', DeviceType:\'' + converter.getAppConstant('DEVICETYPE', data[index].Type) + 
-							'\', DeviceStatus:\'' + converter.getAppConstant('DEVICESTATE', data[index].State) + '\' },';
+							'\', DeviceType:\'' + Converter.getAppConstant('DEVICETYPE', data[index].Type) + 
+							'\', DeviceStatus:\'' + Converter.getAppConstant('DEVICESTATE', data[index].State) + '\' },';
 		}
 		listDevice = listDevice.substring(0,listDevice.length);
 		listDevice += ']';
@@ -54,13 +54,12 @@ var listDeviceRequest = {
 		Publisher.publish({type : EVENTTYPE.LOG, message : 'list device request'}, 'events');
 
 		var devices = DeviceControl.getListDeviceConnected();
-
 		if (devices.length > 0) {
 			var CONDITIONNALENDOFSTRINGLENGTH = 4;
 			var query = this.sqlQuery;
 
 			for (var index = devices.length; index-- ;) {
-				query += ' (idDevice = \'' + devices[index].deviceId + '\' AND DeviceNumber = \'' + devices[index].deviceNumber + '\') OR ' ;
+				query += ' (DeviceGUID = \'' + devices[index].deviceId + '\' AND DeviceNumber = \'' + devices[index].deviceNumber + '\') OR ' ;
 			}
 			query = query.substring(0, query.length - CONDITIONNALENDOFSTRINGLENGTH);
 
@@ -85,8 +84,8 @@ var deviceDetails = {
 	format : function (data) {
 		var listDevice = '[{ DeviceId:{ DeviceId:' + data[0].ID + ', DeviceNumber:' + data[0].DeviceNumber + '}' +
 					', DeviceName:\'' + data[0].Name + 
-					'\', DeviceType:\'' + converter.getAppConstant('DEVICETYPE', data[0].Type) + 
-					'\', DeviceStatus:\'' + converter.getAppConstant('DEVICESTATE', data[0].State) + '\' }]';
+					'\', DeviceType:\'' + Converter.getAppConstant('DEVICETYPE', data[0].Type) + 
+					'\', DeviceStatus:\'' + Converter.getAppConstant('DEVICESTATE', data[0].State) + '\' }]';
 
 		return listDevice;
 	},
@@ -110,11 +109,13 @@ var setDeviceState = {
    },
 	execute : function (params, res) {
 		var that = this;
-      res.contentType('application/javascript');
+		res.contentType('application/javascript');
 
-		Publisher.publish(Message.getMessage(30, params), 'devices');
+		Message.getMessage(30, params, function (message) {
+			Publisher.publish(message, 'devices');
+		});
 
-   	res.send('[' + '{ Success : \'OK\'}' + ']');
+		res.send('[' + '{ Success : \'OK\'}' + ']');
 	}
 }.extend(Properties.SetDeviceState);
 
@@ -172,9 +173,9 @@ var getDeviceConfiguration = {
 
 		var query = Util.format(this.sqlQuery, params.DeviceId);
 
-      DbRequest.Query(query, function (data) {
-         that.callback(data, res, params.callback);
-      });
+	  DbRequest.Query(query, function (data) {
+		 that.callback(data, res, params.callback);
+	  });
 	}
 }.extend(Properties.DeviceConfiguration);
 

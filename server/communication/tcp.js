@@ -32,36 +32,50 @@ var createTCPServer = function (port) {
         device.setKeepAlive(true, IDLETIMEOUT);
 
         device.setTimeout(IDLETIMEOUT, function () {
-			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
-
-			if (devices.indexOf(device) === -1) {			
+			
+			if (devices.indexOf(device) === -1) {
+				if (device.infoDevice[0]) {
+					Publisher.publish({
+						deviceId : device.infoDevice[0].deviceId
+					}, 'clientsDeconection');
+				}
 				device.end();
-				console.log(device.name + ': end');
+				
+				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
 				this();
 			}
         });
 
         device.on('end', function () {
-			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
 
-			if (devices.indexOf(device) === -1) {			
-				device.end();
-				console.log(device.name + ': end');
+			if (devices.indexOf(device) === -1) {
+				if (device.infoDevice[0]) {
+					Publisher.publish({
+						deviceId : device.infoDevice[0].deviceId
+					}, 'clientsDeconection');
+				}
+				
+				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
 				this();
 			}
         });
 
         device.on('close', function () {
-			Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
             devices.splice(devices.indexOf(device), 1);
-
-			if (devices.indexOf(device) === -1) {			
+			
+			if (devices.indexOf(device) === -1) {
+				if (device.infoDevice[0]) {
+					Publisher.publish({
+						deviceId : device.infoDevice[0].deviceId
+					}, 'clientsDeconection');
+				}
+				
 				device.end();
-				console.log(device.name + ': end');
+				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
 				this();
 			}
@@ -73,9 +87,10 @@ var createTCPServer = function (port) {
 
         device.on('data', function (data) {
             var decodedData = binaryParser.parser(data);
-
-
-			if ( decodedData.payload === PayloadType.INFORESPONSE ) {
+			console.log(decodedData);
+			
+			this.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
+			if ( decodedData.payload === PayloadType.INFORESPONSE && !deviceExist(devices, device.deviceId, decodedData.deviceNumber) ) {
 				this.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
 				this.infoDevice.push({ deviceId : device.deviceId, deviceNumber : decodedData.deviceNumber });
 				devices.push(this);
@@ -95,9 +110,11 @@ var createTCPServer = function (port) {
 					deviceState :  decodedData.state,
 					deviceType : decodedData.type,
 					deviceIP : device.remoteAddress
-				}, 'clients');
+				}, 'hearbeat');
 				
 				Publisher.publish({ type : EVENTTYPE.LOG, message : 'Update Device : ' + device.deviceId }, 'events');
+				
+				device.write(binaryParser.getBuffer(PayloadType.HEARTBEATREQUEST, undefined));
 			}
         });
         var message = 'Connected : ' + device.name;
@@ -110,12 +127,14 @@ var createTCPServer = function (port) {
 
 var deviceExist = function (listDevice, deviceID, deviceNumber) {
 	var exist = false;
-
-	for (var index = listDevice.length; index-- ;) {
-		var infoDevice = listDevice[index].infoDevice.deviceId;
-		if (infoDevice.deviceId === deviceID && infoDevice.deviceNumber === deviceNumber) {
-			exist = true;
-			break;
+			
+	for (var index = 0; index < listDevice.length; index++ ) {
+		var infoDevice = listDevice[index].infoDevice;
+		for(var index2 = infoDevice.length; index--;) {
+			if (infoDevice[index2].deviceId === deviceID && infoDevice[index2].deviceNumber === deviceNumber) {
+				exist = true;
+				break;
+			}
 		}
 	}
 
@@ -130,11 +149,14 @@ var broadcast = function (message) {
 
 var subscribe = (function () {
 	Publisher.subscribe(function (message) {
-		sendMessage(message.payload, message.DeviceId);
+		sendMessage(message.payload, {
+			deviceId:message.device.deviceId,
+			deviceNumber:message.device.deviceNumber
+		});
 	}, 'devices');
 })();
 
-var sendMessage = function (message, DeviceId) {
+var sendMessage = function (message, currentDevice) {
 	var success = false;
 
 	firstLoop  : for (var index0 = devices.length; index0--; ) {
@@ -148,7 +170,6 @@ var sendMessage = function (message, DeviceId) {
 				break firstLoop;
 			}
 		}
-
 	}
 
     return { 'success' : success };

@@ -20,7 +20,9 @@ var Publisher = {
 		devices : [],
 		clients : [],
 		jobs : [],
-		events : []
+		events : [],
+		clientsDeconection : [],
+		hearbeat : []
 	},
 	subscribe: function (fn, type) {
 		type = type || 'any';
