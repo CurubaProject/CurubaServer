@@ -30,6 +30,7 @@ var DeviceRegistrer = {
 	sqlRequestRegister : SQLRequest.REGISTRERDEVICE,
 	sqlRequestAddCustomInfo : SQLRequest.AddCUSTOMINFO,
 	sqlRequestSelectDeviceId : SQLRequest.SELECTDEVICEID,
+	sqlRequestAddDeviceConsumption : SQLRequest.ADDSTATISTICS,
 	callback : function (newDevice) {
 		var that = this;
 
@@ -69,6 +70,15 @@ var DeviceRegistrer = {
 		DbRequest.Query(that.getQuery(newDevice), function (data) {
 			that.callback(newDevice);
 		});
+	},
+	saveDeviceConsumption : function (device) {
+		var that = this;
+		
+	    DbRequest.Query(that.getQuerySelectDeviceId(device), function (data) {
+			DbRequest.Query(Util.format(that.sqlRequestAddDeviceConsumption, data[0].idDevice, device.deviceData), function (data) {
+			// NOTHING TO DO
+			});
+        });
 	}
 
 };
@@ -105,7 +115,17 @@ var subscribeDeconection = (function () {
 
 var subscribeHearbeat = (function () {
 	Publisher.subscribe(function (device) {
-		DeviceRegistrer.saveDevice(device);
+		var newDevice = {
+			deviceId : device.deviceId,
+			deviceNumber : device.deviceNumber,
+			deviceType : device.deviceType,
+			deviceState : device.deviceState,
+			deviceIP : device.deviceIP,
+			deviceData : device.deviceData
+		};
+		
+		DeviceRegistrer.saveDevice(newDevice);
+		DeviceRegistrer.saveDeviceConsumption(newDevice);
 	}, 'hearbeat');
 })();
 

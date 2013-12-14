@@ -15,8 +15,8 @@
 // along with "Curuba Server".  If not, see <http://www.gnu.org/licenses/>.
 // ----------------------------------------------------------------------------
 var JobType = {
-	DEVICECONTROLE : 10
-	// TODO belm2440 : It will contain other types of jobs, such as database compression.
+	DEVICECONTROLE : 10,
+	DATABASECOMPRESSION : 20
 };
 
 module.exports = JobType;

@@ -22,7 +22,8 @@ var Publisher = {
 		jobs : [],
 		events : [],
 		clientsDeconection : [],
-		hearbeat : []
+		hearbeat : [],
+		dbCompress : []
 	},
 	subscribe: function (fn, type) {
 		type = type || 'any';

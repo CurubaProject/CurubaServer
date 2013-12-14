@@ -134,11 +134,11 @@ var getDeviceStatistics = {
 		var typeStat = Statistic.getStatistic(params.Granularity);
 
 		var that = this;
-		var query = Util.format(this.sqlQuery, params.DeviceId, typeStat.type);
+		var query = Util.format(this.sqlQuery, params.DeviceId, typeStat.type, params.Date);
 
-      DbRequest.Query(query, function (data) {
-         that.callback(data, res, params.callback, typeStat);
-      });
+		DbRequest.Query(query, function (data) {
+			that.callback(data, res, params.callback, typeStat);
+		});
 	}
 }.extend(Properties.DeviceStatistics);
 

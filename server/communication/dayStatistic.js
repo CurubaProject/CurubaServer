@@ -16,24 +16,27 @@
 // ----------------------------------------------------------------------------
 var typeStatistics = require('./constant').Device.TYPESTATISTIC;
 
-var NUMBEROFDAY = 31;
+var NUMBEROFDAY = 24;
+
+var HEARBEAT_TIME = 5;
 
 var Day = {
 	formatStatistic : function (stats) {
 		var result = '[';
+
 		for(var index = NUMBEROFDAY; index--;) {
-			result += '{\'graduation\': \'' + index + '\', \'value\': ' + stats[index] + '},';
+			result += '{\'graduation\': \'' + index + '\', \'value\': ' + stats[index] / 720 / 1000  + '},';
 		}
 
-      result += ']';
+		result += ']';
 
 		return result;
 	},
 	formatData : function (data) {
-		var stats = new Array(NUMBEROFDAY); // TODO belm2440 : remove "new array".
+		var stats = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]; // TODO belm : remove "new array".
 		for (var index = data.length ; index--;) {
 			var currentData = data[index];
-			stats[new Date(currentData.Date).getDay()] += currentData.Value;
+			stats[new Date(currentData.Date).getHours()] += currentData.Value;
 		}
 
 		return stats;

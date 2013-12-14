@@ -41,6 +41,15 @@ var jobfactory = function (type, params) {
 				}
 			};
 			break;
+		case TypeJob.DATABASECOMPRESSION :
+			jobAction = {
+				execute : function () {
+					Publisher.publish({}, 'dbCompress');
+				
+					var message = Util.format('Job (id:%s) execute', params.idScheduleDevice);
+					Publisher.publish({type : EVENTTYPE.LOG, message : message}, 'events');
+				}
+			}
 		default :
 			break;
 	}

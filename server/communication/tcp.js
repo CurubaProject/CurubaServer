@@ -21,7 +21,7 @@ var net = require('net'),
 	PayloadType = require('commun/payloadType');
 
 var devices = [],
-    IDLETIMEOUT = 1000 * 60 * 1;
+    IDLETIMEOUT = 1000 * 60 * 1/2;
 
 // net.createServer create a TCP server, the function pass in parameter define
 // every events.
@@ -109,7 +109,8 @@ var createTCPServer = function (port) {
 					deviceNumber : decodedData.deviceNumber,
 					deviceState :  decodedData.state,
 					deviceType : decodedData.type,
-					deviceIP : device.remoteAddress
+					deviceIP : device.remoteAddress,
+					deviceData : decodedData.analogicRead
 				}, 'hearbeat');
 				
 				Publisher.publish({ type : EVENTTYPE.LOG, message : 'Update Device : ' + device.deviceId }, 'events');
@@ -175,11 +176,21 @@ var sendMessage = function (message, currentDevice) {
     return { 'success' : success };
 };
 
+process.on('SIGUSR1', function () {
+	createTCPServer.close();
+	process.exit( );
+});
+
+process.on( 'SIGINT', function() {
+	createTCPServer.close();
+	process.exit( );
+});
+
 exports.broadcast = broadcast;
 exports.createTCPServer = createTCPServer;
 exports.sendMessage = sendMessage;
 
-// TODO belm2440 : move this code to a test file? You know what to do.
+// TODO belm : move this code to a test file? You know what to do.
 // TODO For Debug Only
 ////////////////////////////////////////////////////////////////
 var PAYLOADNUMBER = 30,
