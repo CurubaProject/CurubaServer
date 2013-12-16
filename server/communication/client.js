@@ -54,6 +54,7 @@ var listDeviceRequest = {
 		Publisher.publish({type : EVENTTYPE.LOG, message : 'list device request'}, 'events');
 
 		var devices = DeviceControl.getListDeviceConnected();
+		console.log(devices);
 		if (devices.length > 0) {
 			var CONDITIONNALENDOFSTRINGLENGTH = 4;
 			var query = this.sqlQuery;
@@ -181,37 +182,55 @@ var getDeviceConfiguration = {
 
 var setDeviceConfiguration = {
 	sqlQuery : SQLRequest.SETDEVICECONFIGURATION,
+	sqlQueryJob : SQLRequest.SETDEVICECONFIGURATIONINSERTSCHEDULE,
 	callback : function (data, res, jsonPCallback) {
-	  res.send('[' + '{ Success : \'OK\'}' + ']');
+		res.send( jsonPCallback + '(' + '{ Success : \'OK\'}' + ')' );
+		//res.send('{ Success : \'OK\'}');
+	},
+	formatQuery : function (data) {
+		var dateFrom = new Date(data.DeviceSchedule.ScheduleFrom);
+		var dateTo = new Date(data.DeviceSchedule.ScheduleTo);
+		
+		var queryInsertJobTo = Util.format(this.sqlQueryJob,
+											 Converter.getAppConstant('DEVICESTATE', data.ScheduleConfig.status), data.ScheduleConfig.value,
+											 data.DeviceId, dateTo.getMinutes(), dateTo.getHours(),
+											 Converter.getAppConstant('DEVICESTATE', data.ScheduleConfig.status), data.ScheduleConfig.value,
+											 data.DeviceId, dateFrom.getMinutes(), dateFrom.getHours());
+	
+		return queryInsertJobTo;
 	},
 	execute : function (params, res) {
 		var that = this;
 		res.contentType('application/javascript');
 
+		console.log(params.DeviceSchedule[0]);
+		
 		var query = Util.format(this.sqlQuery, params.DeviceName, params.DeviceId);
-/*
-		var insertQuery = '';
-		var updateQuery = '';
-		for (var index = params.DeviceSchedule.length; index--;) {
-			var currentSchedule = params.DeviceSchedule[index];
+		
+		/*
+			INSERT INTO ConfigSchedule (DeviceState, DeviceValue) VALUES (%s, %s);
+			INSERT INTO ScheduleDevice (ScheduleType, DeviceId, Minute, Hour, ScheduleConfigId ) VALUES (0,%s,%s,%s, LAST_INSERT_ID() );
+			
+			SELECT LAST_INSERT_ID() ScheduleTO;
+			
+			INSERT INTO ConfigSchedule (DeviceState, DeviceValue) VALUES (%s, %s);
+			INSERT INTO ScheduleDevice (ScheduleType, DeviceId, Minute, Hour, ScheduleConfigId, ScheduleDeviceIdTo) VALUES (0,%s,%s,%s, LAST_INSERT_ID(), ScheduleTO );
+		*/
+		
+		/*INSERT INTO ScheduleDevice (ScheduleType, DeviceId, Minute, Hour, ScheduleConfigId, ScheduleDeviceIdTo) VALUES (0,%s,%s,%s, %s,LAST_INSERT_ID())*/
+	  
+		DbRequest.Query(query, function (data) {
+			that.callback(data, res, params.callback);
+		});
 
-			if (typeof currentSchedule.ScheduleId !== 'undefined') {
-				insertQuery += util.format(SQLRequest.SETDEVICECONFIGURATIONINSERTSCHEDULE, params.DeviceId);
-			} else {
-				updateQuery += util.format('',  currentSchedule.ScheduleId);
-			}
-		}
-*/
-/*
-      db.init();
-      db.update(query, function (data) {
-         that.callback(data, res);
-      });
-      db.close();
+		/*DbRequest.Query(that.formatQuery(params), function (data) {
+		});*/
+		/*
+		DbRequest.Query(queryInsertJob, function (data) {
+			that.callback(data, res, params.callback);
+		});
 */
 		Publisher.publish({ jobId: 0}, 'jobs');
-
-		res.send('[' + '{ Success : \'OK\'}' + ']');
 	}
 }.extend(Properties.SetDeviceConfiguration);
 

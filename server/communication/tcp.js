@@ -21,7 +21,7 @@ var net = require('net'),
 	PayloadType = require('commun/payloadType');
 
 var devices = [],
-    IDLETIMEOUT = 1000 * 60 * 1/2;
+    IDLETIMEOUT = 1000 * 60 * 2;
 
 // net.createServer create a TCP server, the function pass in parameter define
 // every events.
@@ -33,18 +33,21 @@ var createTCPServer = function (port) {
 
         device.setTimeout(IDLETIMEOUT, function () {
             devices.splice(devices.indexOf(device), 1);
-			
+
 			if (devices.indexOf(device) === -1) {
 				if (device.infoDevice[0]) {
 					Publisher.publish({
 						deviceId : device.infoDevice[0].deviceId
 					}, 'clientsDeconection');
+					
+					Publisher.publish({ type : EVENTTYPE.LOG, message : 'Disconnect : ' + device.name + ': end' }, 'events');
 				}
-				device.end();
+				device.destroy();
 				
 				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
-				this();
+				var fn = arguments.callee;
+				fn.call(this);
 			}
         });
 
@@ -60,13 +63,14 @@ var createTCPServer = function (port) {
 				
 				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
-				this();
+				var fn = arguments.callee;
+				fn.call(this);
 			}
         });
 
         device.on('close', function () {
             devices.splice(devices.indexOf(device), 1);
-			
+
 			if (devices.indexOf(device) === -1) {
 				if (device.infoDevice[0]) {
 					Publisher.publish({
@@ -77,7 +81,8 @@ var createTCPServer = function (port) {
 				device.end();
 				Publisher.publish({ type : EVENTTYPE.LOG, message : device.name + ': end' }, 'events');
 			} else {
-				this();
+				var fn = arguments.callee;
+				fn.call(this);
 			}
         });
 
@@ -90,7 +95,7 @@ var createTCPServer = function (port) {
 			console.log(decodedData);
 			
 			this.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
-			if ( decodedData.payload === PayloadType.INFORESPONSE && !deviceExist(devices, device.deviceId, decodedData.deviceNumber) ) {
+			if ( decodedData.payload === PayloadType.INFORESPONSE ) {
 				this.deviceId = '' + decodedData.mac_nic_1 + decodedData.mac_nic_2 + decodedData.mac_nic_3;
 				this.infoDevice.push({ deviceId : device.deviceId, deviceNumber : decodedData.deviceNumber });
 				devices.push(this);
@@ -128,10 +133,10 @@ var createTCPServer = function (port) {
 
 var deviceExist = function (listDevice, deviceID, deviceNumber) {
 	var exist = false;
-			
+
 	for (var index = 0; index < listDevice.length; index++ ) {
 		var infoDevice = listDevice[index].infoDevice;
-		for(var index2 = infoDevice.length; index--;) {
+		for(var index2 = infoDevice.length; index2--;) {
 			if (infoDevice[index2].deviceId === deviceID && infoDevice[index2].deviceNumber === deviceNumber) {
 				exist = true;
 				break;
@@ -172,6 +177,8 @@ var sendMessage = function (message, currentDevice) {
 			}
 		}
 	}
+	
+	console.log(success);
 
     return { 'success' : success };
 };

@@ -106,7 +106,8 @@ var subscribeDeconection = (function () {
 		};
 		
 		for (var index = listDeviceConnected.length; index--;) {
-			if (oldDevice.deviceId === listDeviceConnected.deviceId) {
+			if (oldDevice.deviceId === listDeviceConnected[index].deviceId) {
+
 				listDeviceConnected.pop(listDeviceConnected[index]);
 			}
 		}
